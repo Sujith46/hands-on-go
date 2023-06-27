@@ -13,6 +13,7 @@ type Message struct {
 func main() {
 	http.HandleFunc("/", helloHandler)
 	http.HandleFunc("/post", postHandler)
+	http.HandleFunc("/get", getHandler)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Server error:", err)
@@ -48,6 +49,24 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := Message{Text: "Received: " + requestBody.Text}
 	jsonData, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("JSON error:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	message := Message{Text: "This is a GET request!"}
+	jsonData, err := json.Marshal(message)
 	if err != nil {
 		fmt.Println("JSON error:", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
