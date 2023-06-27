@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi"
 )
 
 type Message struct {
@@ -11,10 +13,12 @@ type Message struct {
 }
 
 func main() {
-	http.HandleFunc("/", helloHandler)
-	http.HandleFunc("/post", postHandler)
-	http.HandleFunc("/get", getHandler)
-	err := http.ListenAndServe(":8080", nil)
+	route := chi.NewRouter()
+
+	route.Get("/", helloHandler)
+	route.Post("/post", postHandler)
+	route.Get("/get", getHandler)
+	err := http.ListenAndServe(":8080", route)
 	if err != nil {
 		fmt.Println("Server error:", err)
 	}
