@@ -1,11 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"github.com/gin-gonic/gin"
 )
 
 type Message struct {
@@ -13,70 +12,45 @@ type Message struct {
 }
 
 func main() {
-	route := chi.NewRouter()
+	route := gin.Default()
 
-	route.Get("/", helloHandler)
-	route.Post("/post", postHandler)
-	route.Get("/get", getHandler)
-	err := http.ListenAndServe(":8080", route)
+	route.GET("/", helloHandler)
+	route.POST("/post", postHandler)
+	route.GET("/get", getHandler)
+	err := route.Run(":8080")
 	if err != nil {
 		fmt.Println("Server error:", err)
 	}
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
+func helloHandler(c *gin.Context) {
 	message := Message{Text: "Hello, World!"}
-	jsonData, err := json.Marshal(message)
-	if err != nil {
-		fmt.Println("JSON error:", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	c.JSON(http.StatusOK, message)
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+func postHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodPost {
+		c.String(http.StatusMethodNotAllowed, "Method Not Allowed")
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
 	var requestBody Message
-	err := decoder.Decode(&requestBody)
+	err := c.BindJSON(&requestBody)
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "Bad Request")
 		return
 	}
 
 	response := Message{Text: "Received: " + requestBody.Text}
-	jsonData, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println("JSON error:", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	c.JSON(http.StatusOK, response)
 }
 
-func getHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+func getHandler(c *gin.Context) {
+	if c.Request.Method != http.MethodGet {
+		c.String(http.StatusMethodNotAllowed, "Method Not Allowed")
 		return
 	}
 
 	message := Message{Text: "This is a GET request!"}
-	jsonData, err := json.Marshal(message)
-	if err != nil {
-		fmt.Println("JSON error:", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	c.JSON(http.StatusOK, message)
 }
